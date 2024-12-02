@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Response</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #output {
+            white-space: pre-wrap;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Streaming Response von http://localhost:3000/</h1>
+    <button onclick="fetchStream()">Start Streaming</button>
+    <div id="output"></div>
+
+    <script>
+        async function fetchStream() {
+            const outputDiv = document.getElementById('output');
+            outputDiv.textContent = 'Lade Daten...';
+
+            const response = await fetch('http://localhost:3000/', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/event-stream'
+                }
+            });
+
+            if (!response.ok) {
+                outputDiv.textContent = 'Fehler beim Abrufen der Daten.';
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let done = false;
+            let data = '';
+
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                done = readerDone;
+                data += decoder.decode(value, { stream: true });
+
+                // Zeige die abgerufenen Daten an
+                outputDiv.textContent = data;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,92 +1,55 @@
 import OpenAI from 'openai';
 
-export default eventHandler((event) => {
+export default eventHandler(async (event) => {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  type UserMessage = {
-    role: 'user';
-    content: string;
-  };
-
-  type AssistantMessage = {
-    role: 'assistant';
-    content: string;
-  };
-
-  type FunctionMessage = {
-    role: 'function';
-    name: string;
-    content: string;
-  };
-
-  type ChatCompletionMessage = UserMessage | AssistantMessage | FunctionMessage;
-
-  function getWeather(location: string) {
-    return {
-      location,
-      temperature: '20°C',
-      condition: 'klarer Himmel',
-    };
-  }
-
   async function chatWithAssistant() {
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4-0613', 
-        messages: [
-          { role: 'user', content: 'Wie ist das Wetter in Berlin?' },
-        ] as ChatCompletionMessage[],
-        functions: [
-          {
-            name: 'getWeather',
-            description: 'Gibt das Wetter für einen bestimmten Ort zurück',
-            parameters: {
-              type: 'object',
-              properties: {
-                location: {
-                  type: 'string',
-                  description: 'Der Ort, für den das Wetter abgefragt wird',
-                },
-              },
-              required: ['location'],
+    const thread = await openai.beta.threads.create({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Wer ist der Schulleiter dieser Schule?',
             },
-          },
-        ],
-        function_call: 'auto', 
-      });
+          ],
+        },
+      ],
+    });
 
-      const message = response.choices[0].message;
+    console.log('Thread created:', thread);
 
-      if (message?.function_call) {
-        const functionName = message.function_call.name;
-        const functionArguments = JSON.parse(message.function_call.arguments || '{}');
+    const encoder = new TextEncoder();
 
-        if (functionName === 'getWeather') {
-          const weatherInfo = getWeather(functionArguments.location);
+    // Create a ReadableStream to stream the response
+    const stream = new ReadableStream({
+      async start(controller) {
+        const run = openai.beta.threads.runs.stream(thread.id, {
+          assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
+          model: 'gpt-4o-mini',
+        });
 
-          const followUpResponse = await openai.chat.completions.create({
-            model: 'gpt-4-0613',
-            messages: [
-              { role: 'user', content: 'Wie ist das Wetter in Berlin?' },
-              {
-                role: 'function',
-                name: 'getWeather',
-                content: JSON.stringify(weatherInfo),
-              },
-            ] as ChatCompletionMessage[],
-          });
+        run.on('textDelta', (delta) => {
+          controller.enqueue(encoder.encode(delta.value));
+        });
 
-          console.log(followUpResponse.choices[0].message?.content);
-        }
-      } else {
-        console.log(message?.content); 
-      }
-    } catch (error) {
-      console.error('Fehler bei der API-Anfrage:', error);
-    }
+        run.on('textDone', () => {
+          controller.close();
+        });
+      },
+    });
+
+    return { threadId: thread.id, stream };
   }
 
-  chatWithAssistant();
+  const { threadId, stream } = await chatWithAssistant();
+
+  // Set the 'threadId' as a custom header in the response
+  setResponseHeader(event, 'X-Thread-ID', threadId);
+
+  // Return the stream to the client
+  return new Response(stream);
 });
