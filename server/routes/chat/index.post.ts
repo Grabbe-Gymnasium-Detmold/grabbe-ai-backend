@@ -5,7 +5,16 @@ export default eventHandler(async (event) => {
     apiKey: process.env.OPENAI_API_KEY,
   });
 
+  // Lese die Frage aus dem Request-Body
+  const body = await readBody(event);
+  const userQuestion = body?.question;
+
+  if (!userQuestion) {
+    return Response.json({ error: "No question provided in request body." }, { status: 400 });
+  }
+
   async function chatWithAssistant() {
+    // Erstelle einen neuen Thread mit der Frage des Nutzers
     const thread = await openai.beta.threads.create({
       messages: [
         {
@@ -13,7 +22,7 @@ export default eventHandler(async (event) => {
           content: [
             {
               type: 'text',
-              text: 'Wer ist der Schulleiter dieser Schule?',
+              text: userQuestion,
             },
           ],
         },
@@ -24,7 +33,7 @@ export default eventHandler(async (event) => {
 
     const encoder = new TextEncoder();
 
-    // Create a ReadableStream to stream the response
+    // Erstelle einen ReadableStream für die Antwort
     const stream = new ReadableStream({
       async start(controller) {
         const run = openai.beta.threads.runs.stream(thread.id, {
@@ -45,11 +54,20 @@ export default eventHandler(async (event) => {
     return { threadId: thread.id, stream };
   }
 
-  const { threadId, stream } = await chatWithAssistant();
+  try {
+    const { threadId, stream } = await chatWithAssistant();
 
-  // Set the 'threadId' as a custom header in the response
-  setResponseHeader(event, 'X-Thread-ID', threadId);
+    // Setze die Thread-ID als Header
+    setResponseHeader(event, 'X-Thread-ID', threadId);
 
-  // Return the stream to the client
-  return new Response(stream);
+    // Rückgabe des Streams
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+      },
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    return Response.json({ error: "Failed to process the request." }, { status: 500 });
+  }
 });

@@ -12,6 +12,7 @@
   "dependencies": {
     "jose": "^5.9.6",
     "openai": "^4.69.0",
+    "serverless-mysql": "^1.5.5",
     "uuid": "^11.0.3"
   }
 }
