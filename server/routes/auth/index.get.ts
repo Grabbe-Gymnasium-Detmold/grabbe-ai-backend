@@ -22,9 +22,9 @@ export default eventHandler(async (event) => {
         // Schreibe die Sitzung in die Datenbank
         const result = await executeQuery({
             query: `
-        INSERT INTO sessions (session_id, ip_address, user_agent, created_at, expires_at, is_active)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `,
+                INSERT INTO sessions (session_id, ip_address, user_agent, created_at, expires_at, is_active)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `,
             values: [
                 sessionId,
                 ipAddress,
@@ -39,18 +39,11 @@ export default eventHandler(async (event) => {
             throw new Error("Failed to save session to database");
         }
 
-        // Setze das Token als Cookie
-        setCookie(event, "session_token", token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            path: "/",
-            maxAge: 7 * 24 * 60 * 60,
-        });
-
+        // Rückgabe des Tokens und der Sitzungs-ID im Response-Body
         return {
             success: true,
             message: "Session created successfully",
+            token: token, // Token wird an den Client gesendet
             sessionId: sessionId,
         };
     } catch (error) {

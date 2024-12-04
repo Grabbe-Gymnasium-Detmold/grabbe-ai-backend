@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streaming Response</title>
+    <title>OpenAI Streaming Chat</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,44 +15,91 @@
             padding: 10px;
             border-radius: 5px;
         }
+        input, button {
+            margin-right: 10px;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Streaming Response von http://localhost:3000/</h1>
-    <button onclick="fetchStream()">Start Streaming</button>
+    <h1>OpenAI Streaming Chat</h1>
+    <input type="text" id="question" placeholder="Frage eingeben..." />
+    <button onclick="fetchStream()">Start Chat</button>
     <div id="output"></div>
 
     <script>
         async function fetchStream() {
             const outputDiv = document.getElementById('output');
-            outputDiv.textContent = 'Lade Daten...';
+            const questionInput = document.getElementById('question');
+            const userQuestion = questionInput.value.trim();
 
-            const response = await fetch('http://localhost:3000/', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/event-stream'
-                }
-            });
-
-            if (!response.ok) {
-                outputDiv.textContent = 'Fehler beim Abrufen der Daten.';
+            if (!userQuestion) {
+                outputDiv.textContent = 'Bitte geben Sie eine Frage ein.';
                 return;
             }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let done = false;
-            let data = '';
+            const token = localStorage.getItem('session_token'); // Token aus localStorage
+            if (!token) {
+                outputDiv.textContent = 'Sie sind nicht eingeloggt. Bitte starten Sie eine Sitzung.';
+                return;
+            }
 
-            while (!done) {
-                const { value, done: readerDone } = await reader.read();
-                done = readerDone;
-                data += decoder.decode(value, { stream: true });
+            outputDiv.textContent = 'Lade Antwort...';
 
-                // Zeige die abgerufenen Daten an
-                outputDiv.textContent = data;
+            try {
+                const response = await fetch('http://localhost:3000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                        'Authorization': `Bearer ${token}`, // Token im Authorization-Header
+                    },
+                    body: JSON.stringify({ question: userQuestion }), // Nutzerfrage im Request-Body
+                });
+
+                if (!response.ok) {
+                    outputDiv.textContent = 'Fehler beim Abrufen der Daten.';
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let done = false;
+                let data = '';
+
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+                    data += decoder.decode(value, { stream: true });
+
+                    // Zeige die empfangenen Daten an
+                    outputDiv.textContent = data;
+                }
+            } catch (error) {
+                outputDiv.textContent = 'Fehler: ' + error.message;
             }
         }
+
+        // Funktion zur Anmeldung und Speicherung des Tokens
+        async function login() {
+            const response = await fetch('http://localhost:3000/auth', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('session_token', data.token); // Speichert das Token im localStorage
+                alert('Anmeldung erfolgreich! Token gespeichert.');
+            } else {
+                alert('Fehler bei der Anmeldung.');
+            }
+        }
+
+        // Optional: Login beim Laden der Seite
+        login();
     </script>
 </body>
 </html>
