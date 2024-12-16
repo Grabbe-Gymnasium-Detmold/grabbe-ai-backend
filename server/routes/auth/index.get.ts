@@ -1,4 +1,4 @@
-import executeQuery from "~~/lib/db";
+import executeQuery from "../../../lib/db";
 import { generateSession } from "../../../lib/jwt";
 import { v4 as uuidv4 } from "uuid"; // UUID-Bibliothek für die Sitzungs-ID
 
