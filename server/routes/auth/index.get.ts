@@ -17,7 +17,7 @@ export default eventHandler(async (event) => {
         // Aktuelles Datum und Ablaufdatum
         const createdAt = new Date();
         const expiresAt = new Date();
-        expiresAt.setDate(createdAt.getDate() + 7); // Ablauf in 7 Tagen
+        expiresAt.setDate(createdAt.getDate() + 1); // Ablauf in 1 Tag
 
         // Schreibe die Sitzung in die Datenbank
         const result = await executeQuery({
