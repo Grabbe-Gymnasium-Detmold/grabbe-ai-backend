@@ -8,26 +8,20 @@ export default eventHandler(async (event) => {
     // Lese die Frage aus dem Request-Body
     const body = await readBody(event);
     const userQuestion = body?.question;
+    const threadId = body?.threadId;
 
     if (!userQuestion) {
         return Response.json({error: "No question provided in request body."}, {status: 400});
     }
+    if(!threadId) {
+        return Response.json({error: "ThreadId is missing."}, {status: 400});
+    }
 
-    async function chatWithAssistant() {
+    async function chatWithAssistant(threadId: string) {
         // Erstelle einen neuen Thread
-        const thread = await openai.beta.threads.create();
+        const thread = await openai.beta.threads.retrieve(threadId)
 
-        // Fügen Sie die spezifischen Vektorspeicher-IDs hinzu, die die gewünschten Dateien enthalten
-        const vectorStoreIds = ['vs_pA0tzm1u3bBjQ5QrknVXOsab']; // Ersetzen Sie diese durch Ihre tatsächlichen IDs
 
-        // Aktualisieren Sie den Thread mit den gewünschten Vektorspeichern
-        await openai.beta.threads.update(thread.id, {
-            tool_resources: {
-                file_search: {
-                    vector_store_ids: vectorStoreIds,
-                },
-            },
-        });
 
         // Fügen Sie die Nutzerfrage als Nachricht hinzu
         await openai.beta.threads.messages.create(thread.id, {
@@ -64,7 +58,7 @@ export default eventHandler(async (event) => {
     }
 
     try {
-        const {threadId, stream} = await chatWithAssistant();
+        const {stream} = await chatWithAssistant(threadId);
 
         // Setze die Thread-ID als Header
         setResponseHeader(event, 'X-Thread-ID', threadId);
