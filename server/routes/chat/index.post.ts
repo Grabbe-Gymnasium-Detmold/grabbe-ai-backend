@@ -43,7 +43,6 @@ export default eventHandler(async (event) => {
                     assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
                     model: 'gpt-4o-mini',
                 });
-
                 run.on('textDelta', (delta) => {
                     controller.enqueue(encoder.encode(delta.value));
                 });
