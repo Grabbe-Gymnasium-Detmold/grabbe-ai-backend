@@ -39,21 +39,32 @@ export default eventHandler(async (event) => {
         // Erstellen Sie einen ReadableStream für die Antwort
         const stream = new ReadableStream({
             async start(controller) {
-                const run = openai.beta.threads.runs.stream(thread.id, {
-                    assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
-                    model: 'gpt-4o-mini',
-                });
-                run.on('textDelta', (delta) => {
-                    controller.enqueue(encoder.encode(delta.value));
-                });
+                try {
+                    const run = openai.beta.threads.runs.stream(thread.id, {
+                        assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
+                        model: 'gpt-4o-mini',
+                    });
 
-                run.on('textDone', () => {
-                    controller.close();
-                });
+                    run.on('textDelta', (delta) => {
+                        controller.enqueue(encoder.encode(delta.value));
+                    });
+
+                    run.on('textDone', () => {
+                        controller.close();
+                    });
+
+                    run.on('error', (err) => {
+                        console.error('Stream Error:', err);
+                        controller.error(err);
+                    });
+                } catch (error) {
+                    console.error('Stream Initialization Error:', error);
+                    controller.error(error);
+                }
             },
         });
 
-        return {threadId: thread.id, stream};
+        return {stream};
     }
 
     try {
@@ -66,8 +77,11 @@ export default eventHandler(async (event) => {
         return new Response(stream, {
             headers: {
                 'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
             },
         });
+
     } catch (error) {
         console.error('Error:', error);
         return Response.json({error: "Failed to process the request."}, {status: 500});
