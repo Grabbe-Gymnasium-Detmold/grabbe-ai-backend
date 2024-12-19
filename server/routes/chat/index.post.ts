@@ -48,16 +48,19 @@ export default eventHandler(async (event) => {
                         model: 'gpt-4o-mini',
                     });
 
+                    // Event-Listener für den TextDelta, der kontinuierlich Text vom Assistant liefert
                     run.on('textDelta', (delta) => {
                         console.log(delta.value);
-                        controller.enqueue(encoder.encode(delta.value)); // Sende den Text in den Stream
+                        controller.enqueue(encoder.encode(delta.value)); // Enqueue Text in den Stream
                     });
 
+                    // Wenn der Text komplett ist, wird der Stream geschlossen
                     run.on('textDone', () => {
                         controller.close(); // Schließe den Stream, wenn der Text komplett ist
                         console.log("controller closed");
                     });
 
+                    // Fehlerbehandlung für den Stream
                     run.on('error', (err) => {
                         console.error('Stream Error:', err);
                         controller.error(err); // Fehler behandeln und Stream schließen
@@ -71,9 +74,17 @@ export default eventHandler(async (event) => {
     }
 
     try {
-        return await chatWithAssistant(threadId);
+        // Aufruf der Funktion, die den Stream zurückgibt
+        const stream = await chatWithAssistant(threadId);
 
-
+        // Rückgabe des Streams als HTTP-Antwort
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/event-stream',  // Content-Type für Event-Streaming
+                'Cache-Control': 'no-cache',         // Verhindert Caching
+                'Connection': 'keep-alive',          // Hält die Verbindung offen
+            },
+        });
     } catch (error) {
         console.error('Error:', error);
         return Response.json({ error: "Failed to process the request." }, { status: 500 });
