@@ -8,7 +8,7 @@ export default eventHandler(async (event) => {
     try {
         const thread = await openai.beta.threads.create();
 
-        const vectorStoreIds = ['vs_pA0tzm1u3bBjQ5QrknVXOsab']; // Ersetzen Sie diese durch Ihre tatsächlichen IDs
+        const vectorStoreIds = ['vs_h2EOQE1UVgYz6FeFOOvsN2Cy']; // Ersetzen Sie diese durch Ihre tatsächlichen IDs
 
         // Aktualisieren Sie den Thread mit den gewünschten Vektorspeichern
         await openai.beta.threads.update(thread.id, {
