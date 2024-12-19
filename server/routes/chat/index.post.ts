@@ -47,11 +47,13 @@ export default eventHandler(async (event) => {
                     });
 
                     run.on('textDelta', (delta) => {
+                        console.log(delta.value);
                         controller.enqueue(encoder.encode(delta.value));
                     });
 
                     run.on('textDone', () => {
                         controller.close();
+                        console.log("controller closed");
                     });
 
                     run.on('error', (err) => {
@@ -75,6 +77,7 @@ export default eventHandler(async (event) => {
         setResponseHeader(event, 'X-Thread-ID', threadId);
 
         // Rückgabe des Streams
+        console.log(" return stream");
         return new Response(stream, {
             headers: {
                 'Content-Type': 'text/event-stream',
