@@ -69,7 +69,7 @@ export default eventHandler(async (event) => {
             },
         });
 
-        return { stream };
+        return stream;
     }
 
     try {
