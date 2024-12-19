@@ -37,6 +37,7 @@ export default eventHandler(async (event) => {
         const encoder = new TextEncoder();
 
         // Erstellen Sie einen ReadableStream für die Antwort
+        console.log('stream starting')
         const stream = new ReadableStream({
             async start(controller) {
                 const run = openai.beta.threads.runs.stream(thread.id, {
@@ -44,6 +45,7 @@ export default eventHandler(async (event) => {
                     model: 'gpt-4o-mini',
                 });
                 run.on('textDelta', (delta) => {
+                    console.log(delta.value);
                     controller.enqueue(encoder.encode(delta.value));
                 });
 
@@ -63,6 +65,7 @@ export default eventHandler(async (event) => {
         setResponseHeader(event, 'X-Thread-ID', threadId);
 
         // Rückgabe des Streams
+        console.log("Sending message to chat");
         return new Response(stream, {
             headers: {
                 'Content-Type': 'text/event-stream',
