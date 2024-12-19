@@ -39,7 +39,7 @@ export default eventHandler(async (event) => {
         const encoder = new TextEncoder();
 
         // Erstellen Sie einen ReadableStream für die Antwort
-        const stream = new ReadableStream({
+        return new ReadableStream({
             async start(controller) {
                 try {
                     // Stream der Antwort von OpenAI
@@ -68,8 +68,6 @@ export default eventHandler(async (event) => {
                 }
             },
         });
-
-        return stream;
     }
 
     try {
