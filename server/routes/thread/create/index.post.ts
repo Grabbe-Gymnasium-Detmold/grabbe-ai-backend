@@ -20,9 +20,14 @@ export default eventHandler(async (event) => {
             },
         });
         const sessionId:String = event.context.user.data.sessionId;
-        await executeQuery({query: 'INSERT INTO threads (session_id, thread_id) VALUES (?,?)', values: [sessionId, thread.id]},)
+        try {
+            await executeQuery({query: 'INSERT INTO threads (session_id, thread_id) VALUES (?,?)', values: [sessionId, thread.id]},)
+            return Response.json({ threadId: thread.id });
 
-        return Response.json({ threadId: thread.id });
+        }catch (err){
+            return Response.json({ error: "Failed to create a thread. SQL Connection failed" }, { status: 500 });
+        }
+
     } catch (error) {
         console.error('Error:', error);
         return Response.json({ error: "Failed to create a thread." }, { status: 500 });
