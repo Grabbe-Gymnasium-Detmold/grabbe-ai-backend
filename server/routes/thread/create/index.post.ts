@@ -20,6 +20,7 @@ export default eventHandler(async (event) => {
             },
         });
         const sessionId:String = event.context.user.sessionId;
+        console.log(event.context.user);
         await executeQuery({query: 'INSERT INTO threads (session_id, thread_id) VALUES (?,?)', values: [sessionId, thread.id]},)
 
         return Response.json({ threadId: thread.id });
