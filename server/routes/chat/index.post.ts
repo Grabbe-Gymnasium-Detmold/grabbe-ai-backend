@@ -1,8 +1,9 @@
 import OpenAI from 'openai';
 import executeQuery from "~~/lib/db";
-import { logError } from './logger'; // Externer Logger für Fehler
 
 class CustomError extends Error {
+    private code: string;
+    private details: {};
     constructor(message, code = 'UNKNOWN', details = {}) {
         super(message);
         this.name = this.constructor.name;
@@ -36,7 +37,7 @@ export default eventHandler(async (event) => {
         try {
             thread = await openai.beta.threads.retrieve(threadId);
         } catch (error) {
-            logError(new CustomError("Failed to retrieve thread", 'THREAD_RETRIEVE_ERROR', { threadId }));
+            console.error(new CustomError("Failed to retrieve thread", 'THREAD_RETRIEVE_ERROR', { threadId }));
             throw new CustomError("Thread not found.", 'THREAD_NOT_FOUND');
         }
 
@@ -53,7 +54,7 @@ export default eventHandler(async (event) => {
                 ],
             });
         } catch (error) {
-            logError(new CustomError("Failed to send user message", 'MESSAGE_CREATE_ERROR', { threadId, userQuestion }));
+            console.error(new CustomError("Failed to send user message", 'MESSAGE_CREATE_ERROR', { threadId, userQuestion }));
             throw new CustomError("Error sending user message.", 'MESSAGE_CREATE_ERROR');
         }
 
@@ -64,7 +65,7 @@ export default eventHandler(async (event) => {
                 values: [userMessage.id, threadId, 'USER', userQuestion, 0],
             });
         } catch (error) {
-            logError(new CustomError("SQL Error during user message insert", 'SQL_INSERT_ERROR', { threadId, userMessage: userQuestion, error: error.message }));
+            console.error(new CustomError("SQL Error during user message insert", 'SQL_INSERT_ERROR', { threadId, userMessage: userQuestion, error: error.message }));
             throw new CustomError("Database error: Could not insert user message.", 'SQL_INSERT_ERROR');
         }
 
@@ -80,7 +81,7 @@ export default eventHandler(async (event) => {
                         max_completion_tokens: 150
                     });
                 } catch (error) {
-                    logError(new CustomError("Failed to start stream", 'STREAM_INIT_ERROR', { threadId }));
+                    console.error(new CustomError("Failed to start stream", 'STREAM_INIT_ERROR', { threadId }));
                     controller.error(new CustomError("Stream initialization error.", 'STREAM_INIT_ERROR'));
                     return;
                 }
@@ -103,14 +104,14 @@ export default eventHandler(async (event) => {
                             values: [botMessageId, threadId, 'BOT', msg.value, 1, userMessage.id],
                         });
                     } catch (error) {
-                        logError(new CustomError("SQL Error during bot message insert", 'SQL_INSERT_ERROR', { threadId, msg: msg.value }));
+                        console.error(new CustomError("SQL Error during bot message insert", 'SQL_INSERT_ERROR', { threadId, msg: msg.value }));
                         controller.error(new CustomError("Database error: Could not insert bot message.", 'SQL_INSERT_ERROR'));
                     }
                 });
 
                 // Fehler im Stream
                 run.on('error', (err) => {
-                    logError(new CustomError("Stream error", 'STREAM_ERROR', { threadId, error: err.message }));
+                    console.error(new CustomError("Stream error", 'STREAM_ERROR', { threadId, error: err.message }));
                     controller.error(new CustomError("Stream error.", 'STREAM_ERROR'));
                 });
             },
@@ -128,7 +129,7 @@ export default eventHandler(async (event) => {
             },
         });
     } catch (error) {
-        logError(error);
+        console.error(error);  // Fehler intern protokollieren
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
