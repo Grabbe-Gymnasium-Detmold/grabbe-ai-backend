@@ -65,8 +65,14 @@ export default eventHandler(async (event) => {
 
                     // Event-Listener für den TextDelta, der kontinuierlich Text vom Assistant liefert
                     run.on('textDelta', (delta) => {
-                        console.log(delta.value);
-                        controller.enqueue(encoder.encode(delta.value)); // Enqueue Text in den Stream
+                        // Regex zum Filtern der Quellenangabe
+                        const regex = /【\d+:\d+†source】/g;
+
+                        // Bereinigter Text nach Entfernen der Quellenangabe
+                        const cleanedText = delta.value.replace(regex, "");
+
+                        console.log(cleanedText); // Den bereinigten Text ausgeben
+                        controller.enqueue(encoder.encode(cleanedText)); // Enqueue bereinigten Text in den Stream
                     });
 
                     // Wenn der Text komplett ist, wird der Stream geschlossen
