@@ -21,7 +21,7 @@ export default eventHandler(async (event) => {
         return Response.json({ error: "ThreadId is missing." }, { status: 400 });
     }
 
-    async function chatWithAssistant(threadId: string) {
+    async function chatWithAssistant(threadId) {
         // Überprüfe, ob der Thread existiert
         const thread = await openai.beta.threads.retrieve(threadId);
 
@@ -40,92 +40,80 @@ export default eventHandler(async (event) => {
             ],
         });
 
-       try{
-           const result = await executeQuery({
-           query: `INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)`,
-           values: [userMessage.id, threadId, 'USER', userQuestion, 0],
-       });
-       }catch (error) {
-           console.error(error);
-           return Response.json({ error: "Failed to speak with the database." }, { status: 500 });
-       }
+        try {
+            await executeQuery({
+                query: `INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)`,
+                values: [userMessage.id, threadId, 'USER', userQuestion, 0],
+            });
+        } catch (error) {
+            console.error("SQL Error while saving user message:", error);
+            throw new Error("Failed to save user message to the database."); // Fehler wird hochgeworfen
+        }
 
         const encoder = new TextEncoder();
 
         // Erstellen Sie einen ReadableStream für die Antwort
         return new Response(new ReadableStream({
-            async start(controller) {
-                try {
-                    // Stream der Antwort von OpenAI
-                    const run = openai.beta.threads.runs.stream(thread.id, {
-                        assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
-                        model: 'gpt-4o-mini',
-                        max_completion_tokens: 250
-                    });
+                async start(controller) {
+                    try {
+                        // Stream der Antwort von OpenAI
+                        const run = openai.beta.threads.runs.stream(thread.id, {
+                            assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
+                            model: 'gpt-4o-mini',
+                            max_completion_tokens: 250
+                        });
 
-                    // Event-Listener für den TextDelta, der kontinuierlich Text vom Assistant liefert
-                    run.on('textDelta', (delta) => {
-                        // Regex zum Filtern der Quellenangabe
-                        const regex = /【\d+:\d+†source】/g;
+                        // Event-Listener für den TextDelta
+                        run.on('textDelta', (delta) => {
+                            const regex = /【\d+:\d+†source】/g;
+                            const cleanedText = delta.value.replace(regex, "");
 
-                        // Bereinigter Text nach Entfernen der Quellenangabe
-                        const cleanedText = delta.value.replace(regex, "");
+                            console.log(cleanedText);
+                            controller.enqueue(encoder.encode(cleanedText));
+                        });
 
-                        console.log(cleanedText); // Den bereinigten Text ausgeben
-                        controller.enqueue(encoder.encode(cleanedText)); // Enqueue bereinigten Text in den Stream
-                    });
+                        run.on('textDone', async (msg) => {
+                            controller.close();
+                            console.log("controller closed");
 
-                    // Wenn der Text komplett ist, wird der Stream geschlossen
-                    run.on('textDone', async (msg) => {
-                        controller.close(); // Schließe den Stream, wenn der Text komplett ist
-                        console.log("controller closed");
+                            const botMsg = await openai.beta.threads.messages.list(threadId);
+                            const botMessageId = botMsg.data[0].id;
 
-                        // Prüfe, ob msg ein String ist
+                            try {
+                                await executeQuery({
+                                    query: 'INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse, responseTo) VALUES (?, ?, ?, ?, ?, ?)',
+                                    values: [botMessageId, threadId, 'BOT', msg.value, 1, userMessage.id],
+                                });
+                            } catch (error) {
+                                console.error("SQL Error while saving bot message:", error);
+                                controller.error(error);
+                            }
+                        });
 
-                        // Generiere die Bot-Message-ID
-                        const botMsg = await openai.beta.threads.messages.list(threadId);
-                        const botMessageId = botMsg.data[0].id;
-
-                        try {
-                            // Speichere die Nachricht des Bots in der Datenbank
-                            await executeQuery({
-                                query: 'INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse, responseTo) VALUES (?, ?, ?, ?, ?, ?)',
-                                values: [botMessageId, threadId, 'BOT', msg.value, 1, userMessage.id],
-                            });
-                        } catch (error) {
-                            console.error("SQL Error:", error);
-                            controller.error(error);
-                        }
-                    });
-
-                    // Fehlerbehandlung für den Stream
-                    run.on('error', (err) => {
-                        console.error('Stream Error:', err);
-                        controller.error(err); // Fehler behandeln und Stream schließen
-                    });
-                } catch (error) {
-                    console.error('Stream Initialization Error:', error);
-                    controller.error(error); // Fehler bei der Initialisierung des Streams
-                }
-            },
-        }),
+                        run.on('error', (err) => {
+                            console.error('Stream Error:', err);
+                            controller.error(err);
+                        });
+                    } catch (error) {
+                        console.error('Stream Initialization Error:', error);
+                        controller.error(error);
+                    }
+                },
+            }),
             { headers: {
-                'Content-Type': 'text/event-stream',  // Content-Type für Event-Streaming
-                'Cache-Control': 'no-cache',         // Verhindert Caching
-                'Connection': 'keep-alive',          // Hält die Verbindung offen
-            }}
+                    'Content-Type': 'text/event-stream',
+                    'Cache-Control': 'no-cache',
+                    'Connection': 'keep-alive',
+                }}
         );
     }
 
     try {
-        // Aufruf der Funktion, die den Stream zurückgibt
         const stream = await chatWithAssistant(threadId);
-
-        // Rückgabe des Streams als HTTP-Antwort
         return stream;
 
     } catch (error) {
         console.error('Error:', error);
-        return Response.json({ error: "Failed to process the request." }, { status: 500 });
+        return Response.json({ error: error.message || "Failed to process the request." }, { status: 500 });
     }
 });
