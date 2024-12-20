@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import executeQuery from "~~/lib/db";
 
 export default eventHandler(async (event) => {
     const openai = new OpenAI({
@@ -18,6 +19,9 @@ export default eventHandler(async (event) => {
                 },
             },
         });
+        const sessionId:String = event.context.user.sessionId;
+        await executeQuery({query: 'INSERT INTO threads (session_id, tthread_id) VALUES (?,?)', values: [sessionId, thread.id]},)
+
         return Response.json({ threadId: thread.id });
     } catch (error) {
         console.error('Error:', error);

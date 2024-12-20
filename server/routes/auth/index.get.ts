@@ -8,12 +8,13 @@ export default eventHandler(async (event) => {
     const userAgent = getRequestHeader(event, "user-agent") || "Unknown";
 
     try {
-        // Generiere den JWT-Token
-        const token = await generateSession({}); // Leere Nutzlast, da keine user_id benötigt wird
+
 
         // Generiere eine eindeutige Sitzungs-ID
         const sessionId = uuidv4();
 
+        // Generiere den JWT-Token
+        const token = await generateSession({sessionId: sessionId}); // Leere Nutzlast, da keine user_id benötigt wird
         // Aktuelles Datum und Ablaufdatum
         const createdAt = new Date();
         const expiresAt = new Date();

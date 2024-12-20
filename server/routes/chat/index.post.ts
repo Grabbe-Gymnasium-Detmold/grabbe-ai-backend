@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import executeQuery from "~~/lib/db";
 
 export default eventHandler(async (event) => {
     const openai = new OpenAI({
