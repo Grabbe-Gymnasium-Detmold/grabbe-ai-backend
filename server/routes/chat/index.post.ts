@@ -70,9 +70,9 @@ export default eventHandler(async (event) => {
                         // Prüfe, ob msg ein String ist
 
                         // Generiere die Bot-Message-ID
-                        const botMessageId = run.currentRun().id;
                         const botMsg = await openai.beta.threads.messages.list(threadId);
-                        console.log(botMsg.data[0].content);
+                        const botMessageId = botMsg.data[0].id;
+
                         try {
                             // Speichere die Nachricht des Bots in der Datenbank
                             await executeQuery({
