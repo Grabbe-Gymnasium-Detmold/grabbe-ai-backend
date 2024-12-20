@@ -76,8 +76,8 @@ export default eventHandler(async (event) => {
                         try {
                             // Speichere die Nachricht des Bots in der Datenbank
                             await executeQuery({
-                                query: 'INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)',
-                                values: [botMessageId, threadId, 'BOT', msg.value, 1],
+                                query: 'INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse, responseTo) VALUES (?, ?, ?, ?, ?, ?)',
+                                values: [botMessageId, threadId, 'BOT', msg.value, 1, userMessage.id],
                             });
                         } catch (error) {
                             console.error("SQL Error:", error);
