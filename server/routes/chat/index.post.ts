@@ -67,12 +67,22 @@ export default eventHandler(async (event) => {
                         controller.close(); // Schließe den Stream, wenn der Text komplett ist
                         console.log("controller closed");
 
-                        // Speichere die Nachricht des Bots in der Datenbank
+                        // Prüfe, ob msg ein String ist
+                        const botMessageText = typeof msg === "string" ? msg : JSON.stringify(msg);
+                        console.log("Bot Message Text:", botMessageText);
+
+                        // Generiere die Bot-Message-ID
                         const botMessageId = run.currentRun().id;
-                        await executeQuery({
-                            query: `INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)`,
-                            values: [botMessageId, threadId, 'BOT', msg, true],
-                        });
+
+                        try {
+                            // Speichere die Nachricht des Bots in der Datenbank
+                            await executeQuery({
+                                query: 'INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)',
+                                values: [botMessageId, threadId, 'BOT', botMessageText, 1],
+                            });
+                        } catch (error) {
+                            console.error("SQL Error:", error);
+                        }
                     });
 
                     // Fehlerbehandlung für den Stream
