@@ -71,7 +71,7 @@ export default eventHandler(async (event) => {
                         const botMessageId = run.currentRun().id;
                         await executeQuery({
                             query: `INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)`,
-                            values: [botMessageId, threadId, 'BOT', msg, 1],
+                            values: [botMessageId, threadId, 'BOT', msg, true],
                         });
                     });
 
