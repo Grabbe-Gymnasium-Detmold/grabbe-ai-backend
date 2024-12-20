@@ -71,11 +71,8 @@ export default eventHandler(async (event) => {
 
                         // Generiere die Bot-Message-ID
                         const botMessageId = run.currentRun().id;
-                        const run1 = await openai.beta.threads.runs.retrieve(
-                            threadId,
-                            run.currentRun().id
-                        );
-                        console.log(run1)
+
+                        console.log(await openai.beta.threads.messages.list(threadId))
                         try {
                             // Speichere die Nachricht des Bots in der Datenbank
                             await executeQuery({
