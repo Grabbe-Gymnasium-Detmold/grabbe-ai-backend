@@ -60,7 +60,7 @@ export default eventHandler(async (event) => {
                     const run = openai.beta.threads.runs.stream(thread.id, {
                         assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
                         model: 'gpt-4o-mini',
-                        max_completion_tokens: 150
+                        max_completion_tokens: 250
                     });
 
                     // Event-Listener für den TextDelta, der kontinuierlich Text vom Assistant liefert
