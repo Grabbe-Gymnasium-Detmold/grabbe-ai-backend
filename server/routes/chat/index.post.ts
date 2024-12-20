@@ -41,7 +41,7 @@ export default eventHandler(async (event) => {
         });
 
        try{
-           await executeQuery({
+           const result = await executeQuery({
            query: `INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)`,
            values: [userMessage.id, threadId, 'USER', userQuestion, 0],
        });
