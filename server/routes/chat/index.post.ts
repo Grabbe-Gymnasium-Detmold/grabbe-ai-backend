@@ -68,8 +68,6 @@ export default eventHandler(async (event) => {
                         console.log("controller closed");
 
                         // Prüfe, ob msg ein String ist
-                        const botMessageText = typeof msg === "string" ? msg : JSON.stringify(msg);
-                        console.log("Bot Message Text:", botMessageText);
 
                         // Generiere die Bot-Message-ID
                         const botMessageId = run.currentRun().id;
@@ -78,7 +76,7 @@ export default eventHandler(async (event) => {
                             // Speichere die Nachricht des Bots in der Datenbank
                             await executeQuery({
                                 query: 'INSERT INTO messages (message_id, thread_id, userType, message_text, isResponse) VALUES (?, ?, ?, ?, ?)',
-                                values: [botMessageId, threadId, 'BOT', botMessageText, 1],
+                                values: [botMessageId, threadId, 'BOT', msg.value, 1],
                             });
                         } catch (error) {
                             console.error("SQL Error:", error);
