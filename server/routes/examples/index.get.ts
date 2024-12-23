@@ -14,7 +14,7 @@ export default eventHandler(async (event) => {
             throw new Error("Failed to Load example Questions");
         }
 
-        return  Response.json({"success": true, questions: result});
+        return  Response.json({"success": true, questions: JSON.stringify(result[0].value)});
     } catch (error) {
         console.error("Error loading questions from datatabase:", error);
         return Response.json({"error": error.message}, {status: 500});
