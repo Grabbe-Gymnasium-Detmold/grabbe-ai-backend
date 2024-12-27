@@ -17,7 +17,7 @@ export default eventHandler(async (event) => {
         }
 
         const evaluationSql = evaluation === "positive" ? 'UP' : 'DOWN';
-
+        console.log(messageId, threadId, evaluationSql);
         // Check message existence and validation
         const result = await executeQuery({ query: 'SELECT * FROM messages WHERE message_id = ?', values: [messageId] });
 
