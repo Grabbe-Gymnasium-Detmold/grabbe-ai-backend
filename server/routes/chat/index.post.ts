@@ -73,11 +73,13 @@ export default eventHandler(async (event) => {
                         });
 
                         run.on('textDone', async (msg) => {
+                            const botMsg = await openai.beta.threads.messages.list(threadId);
+                            const botMessageId = botMsg.data[0].id;
+                            controller.enqueue(encoder.encode(JSON.stringify({done: true, messageId: botMessageId})));
                             controller.close();
                             console.log("controller closed");
 
-                            const botMsg = await openai.beta.threads.messages.list(threadId);
-                            const botMessageId = botMsg.data[0].id;
+
 
                             try {
                                 await executeQuery({
