@@ -109,8 +109,7 @@ export default eventHandler(async (event) => {
     }
 
     try {
-        const stream = await chatWithAssistant(threadId);
-        return stream;
+        return await chatWithAssistant(threadId);
 
     } catch (error) {
         console.error('Error:', error);
