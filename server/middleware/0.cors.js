@@ -1,17 +1,33 @@
 export default defineEventHandler(async (event) => {
-  const origin = getRequestHeader(event, 'origin') || 'http://localhost:3000'; // Standard-Origin für lokale Entwicklung
-  const allowedOrigins = ['https://example.com', 'https://anotherdomain.com']; // Liste erlaubter Domains
+  // Hole den Ursprung der Anfrage oder verwende einen Standardwert für die lokale Entwicklung
+  const origin = getRequestHeader(event, 'origin') || 'http://localhost:3000';
 
-  if (allowedOrigins.includes(origin)) {
+  // Definiere eine Funktion, um Wildcards dynamisch zu überprüfen
+  const allowedOrigins = ['https://grabbe.site', 'https://subdomain.grabbe.site', 'https://grabbe.tech'];
+
+  const isAllowedOrigin = (origin) => {
+    return allowedOrigins.some((allowedOrigin) => {
+      if (allowedOrigin.includes('*')) {
+        // Wildcards verarbeiten
+        const regex = new RegExp(`^${allowedOrigin.replace('*.', '.*')}$`);
+        return regex.test(origin);
+      }
+      return allowedOrigin === origin;
+    });
+  };
+
+  // Überprüfe, ob der Ursprung erlaubt ist
+  if (isAllowedOrigin(origin)) {
     setResponseHeaders(event, {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Requested-With, Accept',
-      'Access-Control-Allow-Credentials': 'true', // Nur, wenn Anmeldeinformationen erforderlich sind
+      'Access-Control-Allow-Origin': origin, // Setze den erlaubten Ursprung
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS', // Erlaube spezifische HTTP-Methoden
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Requested-With, Accept', // Erlaube spezifische Header
+      'Access-Control-Allow-Credentials': 'true', // Erforderlich, wenn Anmeldeinformationen wie Cookies gesendet werden
     });
   } else {
+    // Blockiere nicht erlaubte Ursprünge
     setResponseHeaders(event, {
-      'Access-Control-Allow-Origin': 'null', // Blockiere nicht erlaubte Ursprünge
+      'Access-Control-Allow-Origin': 'null',
     });
   }
 
@@ -21,6 +37,8 @@ export default defineEventHandler(async (event) => {
     setResponseHeaders(event, {
       'Content-Length': '0',
     });
-    return ''; // Beende die Verarbeitung
+    return ''; // Beende die Verarbeitung der Anfrage
   }
+
+  // Füge hier zusätzlichen Code für die Verarbeitung anderer Anfragen hinzu (falls erforderlich)
 });
