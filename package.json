@@ -10,8 +10,13 @@
     "nitropack": "latest"
   },
   "dependencies": {
+    "db": "^6.0.3",
+    "dotenv": "^16.4.7",
+    "h3": "^1.13.0",
     "jose": "^5.9.6",
-    "openai": "^4.69.0",
+    "mysql": "^2.18.1",
+    "nitro": "^0.0.0",
+    "openai": "^4.76.3",
     "serverless-mysql": "^1.5.5",
     "uuid": "^11.0.3"
   }
