@@ -23,6 +23,6 @@ jobs:
           script: |
             cd /root/prod/grabbe-ai-backend
             git pull
-            npm install --production
+            npm install
             npm run build
             pm2 restart grabbeai-backend
