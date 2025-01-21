@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import { CIDRMatcher } from 'cidr-matcher';
+import CIDRMatcher from 'cidr-matcher';
 
 export async function checkVPN(ip) {
     try {

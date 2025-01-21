@@ -10,6 +10,7 @@
     "nitropack": "latest"
   },
   "dependencies": {
+    "@types/cidr-matcher": "^2.1.2",
     "cidr-matcher": "^2.1.1",
     "db": "^6.0.3",
     "dotenv": "^16.4.7",
