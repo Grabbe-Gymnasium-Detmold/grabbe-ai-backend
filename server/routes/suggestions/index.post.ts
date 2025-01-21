@@ -1,56 +1,43 @@
-import executeQuery from "~~/lib/db";
+import executeQuery from "../../../lib/db";
 
 export default eventHandler(async (event) => {
     try {
+        // Request-Body einlesen (per Nitro kann man z.B. `readBody(event)` verwenden)
         const body = await readBody(event);
-        const userQuestion = body?.question;
-        const userAnswer = body?.answer; // optional
-        const threadId = body?.sessionId;
+        const { question, answer } = body;
 
-        // 1) Validierung
-        if (!userQuestion) {
+        // Validierung (z.B. Frage ist Pflicht)
+        if (!question) {
             return Response.json(
-                { error: "No question provided in request body." },
-                { status: 400 }
-            );
-        }
-        // Beispiel: Länge max. 150 Zeichen (analog zu /chat/index.post.ts)
-        if (userQuestion.length > 150) {
-            return Response.json(
-                { error: "Question exceeds 150 characters." },
-                { status: 400 }
-            );
-        }
-        if (!threadId) {
-            return Response.json(
-                { error: "ThreadId is missing." },
+                { error: "Missing 'question' field" },
                 { status: 400 }
             );
         }
 
-        // 2) In DB speichern
-        // created_at wird automatisch per DEFAULT CURRENT_TIMESTAMP gefüllt
-        const insertQuery = `
-      INSERT INTO suggestions (question, answer, thread_id)
-      VALUES (?, ?, ?)
-    `;
-        const values = [userQuestion, userAnswer || null, threadId];
+        // Insert-Query vorbereiten
+        const query = `INSERT INTO suggestions (question, answer) VALUES (?, ?)`;
+        const values = [question, answer || null];
 
-        const result = await executeQuery({ query: insertQuery, values });
+        // Insert ausführen
+        const result = await executeQuery({ query, values });
 
+        // Fehlerbehandlung
         if (result.error) {
-            throw new Error("Failed to insert suggestion: " + result.error);
+            throw new Error("Error inserting suggestion: " + result.error);
         }
 
-        // 3) Erfolgsmeldung zurück
+        // Erfolgsantwort
         return Response.json(
-            { success: true, message: "Suggestion saved successfully!" },
+            {
+                success: true,
+                message: "Suggestion saved successfully!",
+            },
             { status: 200 }
         );
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error in POST /suggestions:", error);
         return Response.json(
-            { error: error.message || "Failed to save suggestion." },
+            { error: error.message || "Unknown error while saving suggestion" },
             { status: 500 }
         );
     }
