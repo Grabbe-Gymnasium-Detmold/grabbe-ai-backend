@@ -13,10 +13,11 @@ export default eventHandler(async (event) => {
                 { status: 400 }
             );
         }
+        const sessionId:String = event.context.user.data.sessionId;
 
         // Insert-Query vorbereiten
-        const query = `INSERT INTO suggestions (question, answer) VALUES (?, ?)`;
-        const values = [question, answer || null];
+        const query = `INSERT INTO suggestions (question, answer, sessionId) VALUES (?, ?, ?)`;
+        const values = [question, answer || null, sessionId];
 
         // Insert ausführen
         const result = await executeQuery({ query, values });
