@@ -4,7 +4,7 @@ import CIDRMatcher from 'cidr-matcher';
 export async function checkVPN(ip) {
     try {
         // Pfad zur Datei, die die IP-Netze enthält
-        const filePath = './assets/vpn.txt';
+        const filePath = '/root/assets/vpn.txt';
 
         // Datei einlesen
         const data = await fs.readFile(filePath, 'utf-8');
@@ -27,7 +27,7 @@ export async function checkVPN(ip) {
 export async function checkDatacenter(ip) {
     try {
         // Pfad zur Datei, die die IP-Netze enthält
-        const filePath = './assets/datacenter.txt';
+        const filePath = '/root/assets/datacenter.txt';
 
         // Datei einlesen
         const data = await fs.readFile(filePath, 'utf-8');
