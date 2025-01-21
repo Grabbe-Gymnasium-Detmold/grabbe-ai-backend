@@ -5,7 +5,7 @@ export default eventHandler(async (event) => {
         const body = await readBody(event);
         const userQuestion = body?.question;
         const userAnswer = body?.answer; // optional
-        const threadId = body?.threadId;
+        const threadId = body?.sessionId;
 
         // 1) Validierung
         if (!userQuestion) {
