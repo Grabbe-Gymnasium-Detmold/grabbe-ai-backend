@@ -74,7 +74,12 @@ export default eventHandler(async (event) => {
                         const run = openai.beta.threads.runs.stream(thread.id, {
                             assistant_id: 'asst_TpSCnmEDecxR9gWDLdkQ7b34',
                             model: 'gpt-4o-mini',
-                            max_completion_tokens: 250
+                            max_completion_tokens: 250,
+                            tool_settings: {
+                                file_search: {
+                                max_num_results: 3 // Begrenzung auf maximal 3 Chunks
+                            }
+
                         });
                         // Event-Listener für den TextDelta
                         run.on('textDelta', (delta) => {
