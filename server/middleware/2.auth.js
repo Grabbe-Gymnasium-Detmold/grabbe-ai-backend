@@ -3,7 +3,8 @@ import { decryptJWT } from "../../lib/jwt";
 
 const excludedRoutes = [
   "/auth",
-  "/_nitro/*"
+  "/_nitro/*",
+    "/examples/*",
 ];
 
 export default defineEventHandler(async (event) => {
