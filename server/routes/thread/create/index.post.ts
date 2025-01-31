@@ -11,7 +11,6 @@ export default eventHandler(async (event) => {
 
         const vectorStoreIds = ['vs_aISnXuyx3qVySKPH11bU7D0y']; // Ersetzen Sie diese durch Ihre tatsächlichen IDs
 
-        // Aktualisieren Sie den Thread mit den gewünschten Vektorspeichern
         await openai.beta.threads.update(thread.id, {
             tool_resources: {
                 file_search: {

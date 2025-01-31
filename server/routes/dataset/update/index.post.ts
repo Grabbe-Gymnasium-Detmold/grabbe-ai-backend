@@ -22,7 +22,7 @@ export default eventHandler(async (event) => {
             actionsLog.push({ action: 'delete', fileId: file.id, status: 'success' });
         }
 
-        // Schritt 2: Dateien aus GitHub herunterladen
+
         const apiUrl = githubRepoUrl
             .replace('github.com', 'api.github.com/repos')
             .replace('/tree/main', '/contents');
